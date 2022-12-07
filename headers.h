@@ -65,3 +65,13 @@ void destroyClk(bool terminateAll)
         killpg(getpgrp(), SIGINT);
     }
 }
+
+
+struct PCB{
+    int arrivaltime;
+    int priority;
+    int runningtime;
+    int pid;
+    int remainingtime;
+    int runningstatus;
+};
