@@ -10,12 +10,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include "PQ.c"
 
 typedef short bool;
 #define true 1
 #define false 0
 
 #define SHKEY 300
+
+#define SERVER_KEY_PATHNAME "/tmp/mqueue_server_key"
+#define PROJECT_ID 'M'
+#define Scheduler_key_pathname "/tmp"
 
 
 ///==============================
@@ -67,6 +72,9 @@ void destroyClk(bool terminateAll)
 }
 
 
+int schedulingalgo;
+int quantum;
+
 struct PCB{
     int arrivaltime;
     int priority;
@@ -74,4 +82,10 @@ struct PCB{
     int pid;
     int remainingtime;
     int runningstatus;
+    int specailid;
+};
+
+struct message_to_sched{
+    struct PCB proceess_info;
+    long message_type;
 };
