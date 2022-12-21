@@ -6,6 +6,12 @@
 
 void clearResources(int);
 
+void startScheduler(int);
+
+void startClock();
+
+void SendToSched();
+
 int main(int argc, char * argv[])
 {
     signal(SIGINT, clearResources);
@@ -21,24 +27,51 @@ int main(int argc, char * argv[])
     char temp;
     //scanf("%s", &temp);
 
-    //sitting up ipc communications between scheduler and process generator
+    //-----sitting up ipc communications between scheduler and process generator----
     
     key_t process_gen_key;
     int p_gen_qid;
-    if ((process_gen_key = ftok (SERVER_KEY_PATHNAME, PROJECT_ID)) == -1) {
+    if ((process_gen_key = ftok("firstFTOK", 65)) == -1) {
         perror ("ftok");
         exit (1);
     }
-    //printf("\n %d" , process_gen_key);
+    
 
-    if ((p_gen_qid = msgget (process_gen_key, 0)) == -1) {
+    printf("\n %d \n" , process_gen_key);
+
+    if ((p_gen_qid = msgget(process_gen_key,  IPC_CREAT | 0666)) == -1) {
         perror ("msgget: server_qid frmo the process generator ");
         exit (1);
     }
+    //---------------------------------
+    
+    //-------------------getting the type of algorithm needed and starting the scheduler
+    int algo;
+    //rename them as text file 1 for , 2 for , 3 for 
+    printf("enter the algorithim number that you want");
+    scanf("%d",&algo);
+    int pid_scheduler;
+    pid_scheduler = fork();
+    if(pid_scheduler == -1){
+        perror("error in fork");
+        exit(1);
+    }else if(pid_scheduler == 0){
+        startScheduler(algo);
+    }
+    //------------------
 
-    FILE *in_file  = fopen("processes.txt", "r");
-    char line[100]; 
-          
+    //starrting the clock process ------------
+    startClock();
+    //-------------
+    
+    //       destroyClk(true);
+    // // for(int i =0 ; i < 5;i++){
+    // //     printf("%d\n" ,x);
+    // // }
+    // if (msgctl (p_gen_qid, IPC_RMID, NULL) == -1) {
+    //         perror ("client: msgctl");
+    //         exit (1);
+    // }
 
     initClk();
     // To get time use this
@@ -51,6 +84,9 @@ int main(int argc, char * argv[])
 
 
     struct message_to_sched Currentmsg;
+    //----------Reading the text File-------------
+    FILE *in_file  = fopen("processes.txt", "r");
+    char line[100]; 
     while ( fgets( line, 100, in_file ) != NULL ) 
             { 
               //printf("inside the lopo \n");
@@ -72,7 +108,7 @@ int main(int argc, char * argv[])
                 Currentmsg.message_type = 1;
 
                 if (msgsnd (p_gen_qid, &Currentmsg, sizeof (struct PCB), 0) == -1) {
-                    perror ("client: msgsnd");
+                    perror ("client: msgsnd error is from this line 102");
                     exit (1);
                 }       
                 
@@ -81,7 +117,7 @@ int main(int argc, char * argv[])
                 //printf(" end is here \n");
               }
             } 
-
+    //---------------------------------------
 
 
     destroyClk(true);
@@ -97,4 +133,27 @@ int main(int argc, char * argv[])
 void clearResources(int signum)
 {
     //TODO Clears all resources in case of interruption
+}
+
+void startScheduler(int algonum){
+    char* filepath = "scheduler.c";
+    char algochar = (char) algonum;
+    char* p_algo_char = &algochar;
+    execlp(filepath , p_algo_char , NULL);
+}
+
+void startClock(){
+    int pid_clock;
+    pid_clock = fork();
+    if(pid_clock == -1){
+        perror("error in fork");
+        exit(1);
+    }else if(pid_clock == 0){
+        char* filepath = "./clk.out";
+        printf("i hace reached this part");
+        if(execlp(filepath , filepath,NULL) == -1){
+            perror("error in exec");
+            exit(1);
+        }
+    }
 }
