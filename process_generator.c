@@ -63,12 +63,12 @@ int main(int argc, char * argv[])
                 while(y > x){
                     sleep(y-x);
                 }
-                currentprocess.arrival = y;
+                currentprocess.arrivaltime = y;
                 currentprocess.runningtime = z;
                 currentprocess.priority = q;
                 currentprocess.specialid = c;
                 
-                Currentmsg.PCB = currentprocess;
+                Currentmsg.proceess_info = currentprocess;
                 Currentmsg.message_type = 1;
 
                 if (msgsnd (p_gen_qid, &Currentmsg, sizeof (struct PCB), 0) == -1) {

@@ -25,16 +25,43 @@ int main(int argc, char * argv[])
         exit (1);
     }
 
-    //process scheduler ipc
-    if ((scheduler_process_key = ftok (SERVER_KEY_PATHNAME, 'Q')) == -1) {
-        perror ("ftok");
-        exit (1);
-    }
+    // //process scheduler ipc
+    // if ((scheduler_process_key = ftok (SERVER_KEY_PATHNAME, 'Q')) == -1) {
+    //     perror ("ftok");
+    //     exit (1);
+    // }
 
-    if ((sched_qid = msgget (scheduler_process_key, 0)) == -1) {
-        perror ("msgget: server_qid");
-        exit (1);
-    }
+    // if ((sched_qid = msgget (scheduler_process_key, 0)) == -1) {
+    //     perror ("msgget: server_qid");
+    //     exit (1);
+    // }
     
+
+    int currentTime = getClk();
+
+    heap_t Shortesjobfirst;
+
+    struct message_to_sched incoming_msg;
+    while(true){
+        if (msgrcv (p_gen_qid, &incoming_msg, sizeof (struct PCB), 0, 0) == -1) {
+            perror ("msgrcv");
+            exit (1);
+        }else{
+            //decide here the decison based on the algortihm choose
+        }
+
+    }
+    //for shortest job first and other stuff also
+    //we weill use a sigchild signal to know that a process terminated then 
+    //depending on the beahvour of the selected algortihm we will decide what to do next
+    //which is in every case also the same just handle sigchild to get the next process 
+    //from the queue
+
+    //also we shuold make a list to keep all process 
+    //finally we should make one ipc commiunication like the one that is already made 
+    //to recive stuff only for each process 
+
+    //in the middle also we should make a loop depending on the next incoming 
+
     destroyClk(true);
 }
