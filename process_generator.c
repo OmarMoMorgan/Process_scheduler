@@ -27,6 +27,8 @@ int main(int argc, char * argv[])
     char temp;
     //scanf("%s", &temp);
 
+    
+
     //-----sitting up ipc communications between scheduler and process generator----
     
     key_t process_gen_key;
@@ -44,6 +46,14 @@ int main(int argc, char * argv[])
         exit (1);
     }
     //---------------------------------
+
+    //------------------this part should be deleted and commented in case something goes wrong
+    // if (msgctl (p_gen_qid, IPC_RMID, NULL) == -1) {
+    //         perror ("client: msgctl");
+    //         exit (1);
+    // }
+    // exit(1);
+    //--------------------------
     
     //-------------------getting the type of algorithm needed and starting the scheduler
     int algo;
@@ -56,12 +66,12 @@ int main(int argc, char * argv[])
         perror("error in fork");
         exit(1);
     }else if(pid_scheduler == 0){
-        startScheduler(algo);
+        //startScheduler(algo);
     }
-    //------------------
+    
 
     //starrting the clock process ------------
-    startClock();
+    //startClock();
     //-------------
     
     //       destroyClk(true);
@@ -107,7 +117,7 @@ int main(int argc, char * argv[])
                 Currentmsg.proceess_info = currentprocess;
                 Currentmsg.message_type = 1;
 
-                if (msgsnd (p_gen_qid, &Currentmsg, sizeof (struct PCB), 0) == -1) {
+                if (msgsnd (p_gen_qid, &Currentmsg, sizeof (struct message_to_sched), 0) == -1) {
                     perror ("client: msgsnd error is from this line 102");
                     exit (1);
                 }       
@@ -133,10 +143,12 @@ int main(int argc, char * argv[])
 void clearResources(int signum)
 {
     //TODO Clears all resources in case of interruption
+    //destroyClk(true);
+    
 }
 
 void startScheduler(int algonum){
-    char* filepath = "scheduler.c";
+    char* filepath = "scheduler.out";
     char algochar = (char) algonum;
     char* p_algo_char = &algochar;
     execlp(filepath , p_algo_char , NULL);

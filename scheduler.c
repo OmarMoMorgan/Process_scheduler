@@ -2,10 +2,20 @@
 //#define SERVER_KEY_PATHNAME "/tmp/mqueue_server_key"
 //#define PROJECT_ID 'M'
 
+void RunAlgo(int);
+void RunPHPF();
+void RunSRTN();
+void RunSJF();
+
+void pause_process(struct PCB);
+void resume_process(struct PCB);
+
+void MakeOutputFile();
+
 int main(int argc, char * argv[])
 {
     initClk();
-    
+    printf("from scheduler \n");
     //TODO implement the scheduler :)
     //upon termination release the clock resources
 
@@ -39,15 +49,17 @@ int main(int argc, char * argv[])
 
     int currentTime = getClk();
 
-    heap_t Shortesjobfirst;
+    heap_t *PQ_PCBs = (heap_t *)calloc(1, sizeof (heap_t));
 
     struct message_to_sched incoming_msg;
     while(true){
-        if (msgrcv (p_gen_qid, &incoming_msg, sizeof (struct PCB), 0, 0) == -1) {
+        if (msgrcv (p_gen_qid, &incoming_msg, sizeof (struct message_to_sched), 0, 0) == -1) {
             perror ("msgrcv");
             exit (1);
         }else{
             //decide here the decison based on the algortihm choose
+            int x = *argv[0];
+            printf("i haev reache here are you happy now \n");
         }
 
     }
@@ -65,3 +77,7 @@ int main(int argc, char * argv[])
 
     destroyClk(true);
 }
+
+// void RunAlgo(){
+
+// }
