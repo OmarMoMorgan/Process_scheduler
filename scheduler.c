@@ -14,7 +14,7 @@ void handler_sigchild(int);
 
 void MakeOutputFile();
 void fetchToPQ();
-void recieveProcess();
+int recieveProcess();
 
 heap_t *PQ_PCBs; 
 int currentalgo;
@@ -118,16 +118,23 @@ void RunAlgo(int num_of_algo){
     }
 }
 
-void recieveProcess(){
+int recieveProcess(){
+    //0 for reciveing nothing 1 for reciveing something
     struct message_to_sched incoming_msg;
-    if (msgrcv (p_gen_qid, &incoming_msg, sizeof (struct PCB), 0, 0) == -1) {
-            perror ("msgrcv");
+    if (msgrcv (p_gen_qid, &incoming_msg, sizeof (struct PCB), 0, IPC_NOWAIT) == -1) {
+            //perror ("msgrcv");
             //exit (1);
+            if(errno != ENOMSG){
+                perror("reciving message failure");
+                exit(1);
+            }
+            return 0;
         }else{
             printf("i haev reache here are you happy now \n");
             printf("%d",incoming_msg.proceess_info.runningtime);
             //printf("after pushing and poping %d \n" , temp_pcb.runningtime);
             fetchToPQ(incoming_msg.proceess_info);
+            return 1;
         }
 }
 
@@ -150,7 +157,7 @@ void RunSRTN(){
     struct PCB currentPCB;
     while(true){
         sleep(1);
-        recieveProcess();
+        int recivedsometing = recieveProcess();
         if(something_running == 0){
             //here you should add that something happened in the output file
             currentPCB = pop(PQ_PCBs);
@@ -170,7 +177,7 @@ void RunPHPF(){
 }
 
 void RunSJF(){
-    
+
 }
 
 //-----------------------
@@ -195,20 +202,26 @@ void run_process(struct PCB currentprocess){
             }
             currentprocess.FirstRunTime = getClk();
             currentprocess.pid = pid_process;
-            //wrtie here that we started a process
+            currentprocess.FirstTime = false;
+            currentprocess.runningstatus = 2;
+            
+            //wrtie here that we started a process LOG
         }
     }else{
         if(kill(currentprocess.pid , SIGCONT) == -1){
             perror("error in sending the signal of resuming");
         }
-        //write here that we resumed a process
+        currentprocess.runningstatus = 2;
+        //write here that we resumed a process LOG
     }
+    currentprocess.lastStartTime = getClk();
 }
 
 void pause_process(struct PCB currentprocess){
     if(kill(currentprocess.pid , 20) == -1){
         perror("error in sending the signal sigstp ");
     }
+    currentprocess.remainingtime = getClk() - currentprocess.lastStartTime;
     //write here that we paused a process
 }
 

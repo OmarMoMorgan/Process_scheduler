@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
 //#include "PQ.c"
 
 typedef short bool;
@@ -82,9 +83,17 @@ struct PCB{
     int pid;
     int remainingtime;
     int runningstatus;
+    // code for the runningstatus 
+    //  1 for just arrived
+    //  2 for running
+    //  3 for blocked
+    //  4 for resumed
+    //  5 for stopped
+    //  6 for finished 
     int specialid;
     bool FirstTime;
     int FirstRunTime;
+    int lastStartTime;
 };
 
 struct message_to_sched{
