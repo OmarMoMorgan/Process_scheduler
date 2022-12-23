@@ -1,5 +1,6 @@
 #include "headers.h"
 #include <signal.h>
+#include <stdio.h>
 //#define SERVER_KEY_PATHNAME "/tmp/mqueue_server_key"
 //#define PROJECT_ID 'M'
 
@@ -25,8 +26,8 @@ int something_running = 0;
 int totalTA = 0;
 int totalRunningtime = 0;
 int num_process = 0;
-File *fileptr_log;
-File *fileptr_stats;
+FILE *fileptr_log;
+FILE *fileptr_stats;
 struct PCB *current_pro_ptr;
 
 void handler_end(int);
@@ -43,7 +44,7 @@ int main(int argc, char * argv[])
 
     fileptr_log = fopen("scheduler.log" , "w");
     fileptr_stats = fopen("scheduler.perf" , "w");
-    frpintf(fileptr_log , "#At \t time \t x \t process \t y \t state \t arr \t w \t total \t z \t remain \t y \t wait \t k");
+    fprintf(fileptr_log , "#At \t time \t x \t process \t y \t state \t arr \t w \t total \t z \t remain \t y \t wait \t k");
     //setting up stuff here
     //setting up connection 
     key_t process_gen_key , scheduler_process_key;
@@ -162,6 +163,78 @@ void fetchToPQ(struct PCB p){
 //here are the 3 algorithms implementation ------------------
 void RunSRTN(){
     struct PCB currentPCB;
+    struct PCB comparingPCB;
+    while(true){
+        sleep(1);
+        if(something_running == 0)
+        {
+            currentPCB = pop(PQ_PCBs);
+            if(currentPCB.specialid == 0){
+                printf("there is no process at the current time ");
+            }
+            else
+            {
+                run_process(currentPCB);
+                something_running = 1;
+            }
+
+        if( recieveProcess()==1)
+        {
+            comparingPCB= pop(PQ_PCBs);
+            if(comparingPCB.remainingtime < currentPCB.remainingtime)
+            {
+                pause_process(currentPCB);
+                fetchToPQ(currentPCB);
+                currentPCB=comparingPCB;
+                run_process(currentPCB);
+                something_running = 1;
+            }
+        }
+
+        }
+        
+    }
+}
+
+
+//write here the 2 remaining algorithms 
+void RunPHPF(){
+    struct PCB currentPCB;
+    struct PCB comparingPCB;
+    while(true){
+        sleep(1);
+        if(something_running == 0)
+        {
+            currentPCB = pop(PQ_PCBs);
+            if(currentPCB.specialid == 0){
+                printf("there is no process at the current time ");
+            }
+            else
+            {
+                run_process(currentPCB);
+                something_running = 1;
+            }
+
+        if( recieveProcess()==1)
+        {
+            comparingPCB= pop(PQ_PCBs);
+            if(comparingPCB.priority < currentPCB.priority)
+            {
+                pause_process(currentPCB);
+                fetchToPQ(currentPCB);
+                currentPCB=comparingPCB;
+                run_process(currentPCB);
+                something_running = 1;
+            }
+        }
+
+            }   
+        }
+    }
+
+
+void RunSJF(){
+    struct PCB currentPCB;
     current_pro_ptr = &currentPCB;
     while(true){
         sleep(1);
@@ -177,15 +250,6 @@ void RunSRTN(){
             }
         }
     }
-}
-
-//write here the 2 remaining algorithms 
-void RunPHPF(){
-
-}
-
-void RunSJF(){
-
 }
 
 //-----------------------
@@ -214,7 +278,7 @@ void run_process(struct PCB currentprocess){
             currentprocess.runningstatus = 2;
             
             //wrtie here that we started a process LOG
-            frpintf(fileptr_log , "At \t time \t %d \t process %d \t started \t arr %d \t total \t %d \t remain \t %d \t wait \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , 0);
+            fprintf(fileptr_log , "At \t time \t %d \t process %d \t started \t arr %d \t total \t %d \t remain \t %d \t wait \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , 0);
         }
     }else{
         if(kill(currentprocess.pid , SIGCONT) == -1){
@@ -222,7 +286,7 @@ void run_process(struct PCB currentprocess){
         }
         currentprocess.runningstatus = 2;
         //write here that we resumed a process LOG
-        frpintf(fileptr_log , "At \t time \t %d \t process %d \t resumed \t arr %d \t total \t %d \t remain \t %d \t wait \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , getClk()-currentprocess.lastStartTime);
+        fprintf(fileptr_log , "At \t time \t %d \t process %d \t resumed \t arr %d \t total \t %d \t remain \t %d \t wait \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , getClk()-currentprocess.lastStartTime);
 
     }
     currentprocess.lastStartTime = getClk();
@@ -234,7 +298,7 @@ void pause_process(struct PCB currentprocess){
     }
     currentprocess.remainingtime = getClk() - currentprocess.lastStartTime;
     //write here that we paused a process
-    frpintf(fileptr_log , "At \t time \t %d \t process %d \t paused \t arr %d \t total \t %d \t remain \t %d \t wait \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , 0);
+    fprintf(fileptr_log , "At \t time \t %d \t process %d \t paused \t arr %d \t total \t %d \t remain \t %d \t wait \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , 0);
 
 }
 
@@ -243,8 +307,8 @@ void handler_sigchild(int signum){
     //write here in the perf that we finished a process
     struct PCB currentprocess = *current_pro_ptr;
     int TA_for_current = getClk()-currentprocess.arrivaltime;
-    int WTA_for_current = TA/currentprocess.runningtime;
-    frpintf(fileptr_log , "At \t time \t %d \t process %d \t finished \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \t TA \t %d \t WTA \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , 0 , 0 , TA_for_current , WTA_for_current);
+    int WTA_for_current = TA_for_current/currentprocess.runningtime;
+    fprintf(fileptr_log , "At \t time \t %d \t process %d \t finished \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \t TA \t %d \t WTA \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , 0 , 0 , TA_for_current , WTA_for_current);
 
 }
 

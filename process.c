@@ -31,9 +31,17 @@ int main(int agrc, char * argv[])
 
     //TODO it needs to get the remaining time from somewhere
     //remainingtime = ??;
-    while (remainingtime > 0)
+    // while (remainingtime > 0)
+    // {
+    //     // remainingtime = ??;
+    // }
+    int start = getClk();
+    while(remainingtime>0)
     {
-        // remainingtime = ??;
+        char c = *argv[1];
+        int m = (int)c;
+        int now = getClk();
+        remainingtime = m - (now - start);
     }
     
     destroyClk(false);
