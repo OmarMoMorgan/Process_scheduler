@@ -9,12 +9,12 @@ void RunPHPF();
 void RunSRTN();
 void RunSJF();
 
-void pause_process(struct PCB);
-void run_process(struct PCB);
+void pause_process(struct PCB*);
+void run_process(struct PCB*);
 void handler_sigchild(int);
 
 void MakeOutputFile();
-void fetchToPQ();
+void fetchToPQ(struct PCB*);
 int recieveProcess();
 
 heap_t *PQ_PCBs; 
@@ -118,7 +118,7 @@ int main(int argc, char * argv[])
 
     RunAlgo(currentalgo);
 
-    destroyClk(true);
+    //destroyClk(true);
 }
 
 void RunAlgo(int num_of_algo){
@@ -134,9 +134,11 @@ void RunAlgo(int num_of_algo){
 int recieveProcess(){
     //0 for reciveing nothing 1 for reciveing something
     struct message_to_sched incoming_msg;
+    //printf("recieve function is called \n");
     if (msgrcv (p_gen_qid, &incoming_msg, sizeof (struct PCB), 0, IPC_NOWAIT) == -1) {
             //perror ("msgrcv");
             //exit (1);
+            //printf("filaure here at the recieve process");
             if(errno != ENOMSG){
                 perror("reciving message failure");
                 exit(1);
@@ -146,21 +148,22 @@ int recieveProcess(){
             printf("i haev reache here are you happy now \n");
             printf("%d",incoming_msg.proceess_info.runningtime);
             //printf("after pushing and poping %d \n" , temp_pcb.runningtime);
-            fetchToPQ(incoming_msg.proceess_info);
+            fetchToPQ(&incoming_msg.proceess_info);
             return 1;
         }
 }
 
-void fetchToPQ(struct PCB p){
+void fetchToPQ(struct PCB *p){
     if(currentalgo == 1){
         //fetch according to highest prioirty
-        push(PQ_PCBs , p.priority , p);
+        push(PQ_PCBs , p->priority , *p);
+        printf("pushing to the oq done sucesffuly \n");
     }else if(currentalgo == 2){
         //fetch according to shortest remainng time
-        push(PQ_PCBs , p.remainingtime , p);
+        push(PQ_PCBs , p->remainingtime , *p);
     }else{
         //fetch according to shortest running time 
-        push(PQ_PCBs , p.runningtime , p);
+        push(PQ_PCBs , p->runningtime , *p);
     }
     
 }
@@ -169,33 +172,36 @@ void fetchToPQ(struct PCB p){
 void RunSRTN(){
     struct PCB currentPCB;
     struct PCB comparingPCB;
+    current_pro_ptr = &currentPCB;
     while(true){
-        
+        int recieved = recieveProcess();
         if(something_running == 0)
         {
             currentPCB = pop(PQ_PCBs);
             if(currentPCB.specialid == 0){
-                printf("there is no process at the current time first algo\n");
+                printf("there is no process at the current time second algo\n");
             }
             else
             {
-                run_process(currentPCB);
-                something_running = 1;
-            }
-
-        if( recieveProcess()==1)
-        {
-            comparingPCB= pop(PQ_PCBs);
-            if(comparingPCB.remainingtime < currentPCB.remainingtime)
-            {
-                pause_process(currentPCB);
-                fetchToPQ(currentPCB);
-                currentPCB=comparingPCB;
-                run_process(currentPCB);
+                run_process(&currentPCB);
                 something_running = 1;
             }
         }
-
+        if(recieved == 1 && something_running == 1)
+        {
+            comparingPCB = pop(PQ_PCBs);
+            if(comparingPCB.specialid != 0){
+                if(comparingPCB.remainingtime < currentPCB.remainingtime)
+                {
+                    pause_process(&currentPCB);
+                    fetchToPQ(&currentPCB);
+                    currentPCB = comparingPCB;
+                    run_process(&currentPCB);
+                    something_running = 1;
+                }else{
+                    fetchToPQ(&comparingPCB);
+                }
+            }
         }
         sleep(1);
     }
@@ -206,8 +212,10 @@ void RunSRTN(){
 void RunPHPF(){
     struct PCB currentPCB;
     struct PCB comparingPCB;
+    current_pro_ptr = &currentPCB;
     while(true){
-        
+        //printf("start of the while loop \n");
+        int recieved = recieveProcess();
         if(something_running == 0)
         {
             currentPCB = pop(PQ_PCBs);
@@ -216,27 +224,38 @@ void RunPHPF(){
             }
             else
             {
-                run_process(currentPCB);
+                run_process(&currentPCB);
+                printf("at this part after run process \n");
                 something_running = 1;
             }
-
-        if( recieveProcess()==1)
+        }
+        if(recieved == 1 && something_running == 1)
         {
+            //printf("after the recieved condition \n");
             comparingPCB= pop(PQ_PCBs);
-            if(comparingPCB.priority < currentPCB.priority)
-            {
-                pause_process(currentPCB);
-                fetchToPQ(currentPCB);
-                currentPCB=comparingPCB;
-                run_process(currentPCB);
-                something_running = 1;
+            printf("comparing PCB adata %d\n" , comparingPCB.specialid);
+            if(comparingPCB.specialid != 0){
+                if(comparingPCB.priority < currentPCB.priority)
+                {
+                    printf("before the pause \n");
+                    pause_process(&currentPCB);
+                    printf("test after pause \n");
+                    //if())
+                    printf("the process about to be pusehd %d" , currentPCB.specialid);
+                    fetchToPQ(&currentPCB);
+                    currentPCB = comparingPCB;
+                    run_process(&currentPCB);
+                    something_running = 1;
+                }
+                else{
+                    fetchToPQ(&comparingPCB);
+                }
             }
         }
-
-            }   
-            sleep(1);
-        }
+        //printf("last part in the if condition \n");
+        sleep(1);
     }
+}
 
 
 void RunSJF(){
@@ -251,7 +270,7 @@ void RunSJF(){
             if(currentPCB.specialid == 0){
                 printf("no process at the current time \n");
             }else{
-                run_process(currentPCB);
+                run_process(&currentPCB);
                 something_running = 1;
             }
         }
@@ -263,10 +282,10 @@ void RunSJF(){
 
 //this is an attemt at runprocess if you have something better please insert it sorry for any incoveinvce
 //funcitons of stopping , pausing and running a process ---------------
-void run_process(struct PCB currentprocess){
-    if(currentprocess.FirstTime == true){
+void run_process(struct PCB *currentprocess){
+    if(currentprocess->FirstTime == true){
         int pid_process;
-        char rem_time_char = (char) currentprocess.remainingtime;
+        char rem_time_char = (char) currentprocess->remainingtime;
         char* p_rem_time_char = &rem_time_char;
         pid_process = fork();
         if(pid_process == -1){
@@ -279,44 +298,67 @@ void run_process(struct PCB currentprocess){
                 perror("error in exec");
                 exit(1);
             }
-            currentprocess.FirstRunTime = getClk();
-            currentprocess.pid = pid_process;
-            currentprocess.FirstTime = false;
-            currentprocess.runningstatus = 2;
+            
             
             //wrtie here that we started a process LOG
-            fprintf(fileptr_log , "At \t time \t %d \t process %d \t started \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \n" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , 0);
+        }else{
+            currentprocess->pid = pid_process;
+            printf("the process id is %d \n" , pid_process);
+            currentprocess->FirstRunTime = getClk();
+            
+            currentprocess->FirstTime = false;
+            currentprocess->runningstatus = 2;
+            printf("the process id is this time from currentprocess%d \n" , currentprocess->pid);
+            fprintf(fileptr_log , "At \t time \t %d \t process %d \t started \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \n" , getClk() , currentprocess->specialid , currentprocess->arrivaltime , currentprocess->runningtime , currentprocess->remainingtime , 0);
+            printf("At \t time \t %d \t process %d \t started \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \n" , getClk() , currentprocess->specialid , currentprocess->arrivaltime , currentprocess->runningtime , currentprocess->remainingtime , 0);
+
+            //printf("after running thisi process for the first time it is time to celeberate \n");
         }
+        
     }else{
-        if(kill(currentprocess.pid , SIGCONT) == -1){
+        if(kill(currentprocess->pid , SIGCONT) == -1){
             perror("error in sending the signal of resuming");
         }
-        currentprocess.runningstatus = 2;
+        currentprocess->runningstatus = 2;
+        //currentprocess->lastStartTime = getClk();
         //write here that we resumed a process LOG
-        fprintf(fileptr_log , "At \t time \t %d \t process %d \t resumed \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \n" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , getClk()-currentprocess.lastStartTime);
+        fprintf(fileptr_log , "At \t time \t %d \t process %d \t resumed \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \n" , getClk() , currentprocess->specialid , currentprocess->arrivaltime , currentprocess->runningtime , currentprocess->remainingtime , getClk()-currentprocess->lastStartTime);
+        printf("At \t time \t %d \t process %d \t resumed \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \n" , getClk() , currentprocess->specialid , currentprocess->arrivaltime , currentprocess->runningtime , currentprocess->remainingtime , getClk()-currentprocess->lastStartTime);
 
     }
-    currentprocess.lastStartTime = getClk();
+    currentprocess->lastStartTime = getClk();
+    printf("running a rocess was done succ \n");
 }
 
-void pause_process(struct PCB currentprocess){
-    if(kill(currentprocess.pid , 20) == -1){
+void pause_process(struct PCB *currentprocess){
+    //struct currentprocess = *
+    //printf("the process about to  be stopped %d \n"  , currentprocess->pid);
+    printf("the process about to  be stopped special is %d \n"  , currentprocess->specialid);
+    printf("I am here at the puase start of function \n");
+    printf("the process about to  be stopped %d \n" , currentprocess->pid);
+    if(kill(currentprocess->pid , SIGSTOP) == -1){
         perror("error in sending the signal sigstp ");
     }
-    currentprocess.remainingtime = getClk() - currentprocess.lastStartTime;
+    currentprocess->remainingtime = currentprocess->remainingtime - (getClk() - currentprocess->lastStartTime);
     //write here that we paused a process
-    fprintf(fileptr_log , "At \t time \t %d \t process %d \t paused \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \n" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , 0);
-
+    fprintf(fileptr_log , "At \t time \t %d \t process %d \t paused \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \n" , getClk() , currentprocess->specialid , currentprocess->arrivaltime , currentprocess->runningtime , currentprocess->remainingtime , 0);
+    printf("At \t time \t %d \t process %d \t paused \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \n" , getClk() , currentprocess->specialid , currentprocess->arrivaltime , currentprocess->runningtime , currentprocess->remainingtime , 0);
+    printf("I am here at the puase \n");
 }
 
 void handler_sigchild(int signum){
     something_running = 0;
+    printf("sigchild is running now will it fail \n");
     //write here in the perf that we finished a process
     struct PCB currentprocess = *current_pro_ptr;
-    int TA_for_current = getClk()-currentprocess.arrivaltime;
+    //printf("line 2 \n");
+    int TA_for_current = getClk() - currentprocess.arrivaltime;
     int WTA_for_current = TA_for_current/currentprocess.runningtime;
+    //printf("line 3 \n");
     fprintf(fileptr_log , "At \t time \t %d \t process %d \t finished \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \t TA \t %d \t WTA \t %d \n" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , 0 , 0 , TA_for_current , WTA_for_current);
+    printf("At \t time \t %d \t process %d \t finished \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \t TA \t %d \t WTA \t %d \n" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , 0 , 0 , TA_for_current , WTA_for_current);
 
+    printf("it has finished running byee i was %d\n" , currentprocess.pid);
 }
 
 void handler_end(int signum1){
@@ -324,10 +366,11 @@ void handler_end(int signum1){
     fclose(fileptr_stats);
     //destroyClk(true);
     //printf("the p_gen_qid at the msgctl is %d \n" , p_gen_qid);
-    if (msgctl (p_gen_qid, IPC_RMID, NULL) == -1) {
-            perror ("from the scheduler: msgctl");
-            exit (1);
-    }
+    // if (msgctl (p_gen_qid, IPC_RMID, NULL) == -1) {
+    //         perror ("from the scheduler: msgctl");
+    //         exit (1);
+    // }
+    printf("Feeling that the end of our time is near \n");
     exit(1);
 }
 //------------------------------------------------

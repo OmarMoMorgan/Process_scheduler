@@ -131,7 +131,10 @@ int main(int argc, char * argv[])
     //---------------------------------------
 
     //sleep(5);
-    wait(NULL);
+    //sleep(10);
+    int status;
+    wait(&status);
+    printf("this is why you exited %d \n" , status);
     destroyClk(true);
     // for(int i =0 ; i < 5;i++){
     //     printf("%d\n" ,x);

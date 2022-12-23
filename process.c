@@ -36,13 +36,17 @@ int main(int agrc, char * argv[])
     //     // remainingtime = ??;
     // }
     int start = getClk();
-    printf("From the process File %d " , getpid());
+    printf("From the process File %d \n" , getpid());
+    char c = *argv[1];
+    int m = (int)c;
+    int now = getClk();
+    remainingtime = m - (now - start);
     while(remainingtime>0)
     {
-        char c = *argv[1];
-        int m = (int)c;
-        int now = getClk();
+        
+        now = getClk();
         remainingtime = m - (now - start);
+        //printf("the remaining time for this process %d \n" ,remainingtime);
     }
     
     destroyClk(false);
