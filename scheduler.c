@@ -25,18 +25,25 @@ int something_running = 0;
 int totalTA = 0;
 int totalRunningtime = 0;
 int num_process = 0;
+File *fileptr_log;
+File *fileptr_stats;
+struct PCB *current_pro_ptr;
 
+void handler_end(int);
 
 int main(int argc, char * argv[])
 {
     initClk();
     printf("from scheduler \n");
     signal(SIGCHLD  , handler_sigchild);
+    signal(SIGINT , handler_end);
     PQ_PCBs = (heap_t *)calloc(1, sizeof (heap_t));
     //TODO implement the scheduler :)
     //upon termination release the clock resources
 
-
+    fileptr_log = fopen("scheduler.log" , "w");
+    fileptr_stats = fopen("scheduler.perf" , "w");
+    frpintf(fileptr_log , "#At \t time \t x \t process \t y \t state \t arr \t w \t total \t z \t remain \t y \t wait \t k");
     //setting up stuff here
     //setting up connection 
     key_t process_gen_key , scheduler_process_key;
@@ -155,6 +162,7 @@ void fetchToPQ(struct PCB p){
 //here are the 3 algorithms implementation ------------------
 void RunSRTN(){
     struct PCB currentPCB;
+    current_pro_ptr = &currentPCB;
     while(true){
         sleep(1);
         int recivedsometing = recieveProcess();
@@ -206,6 +214,7 @@ void run_process(struct PCB currentprocess){
             currentprocess.runningstatus = 2;
             
             //wrtie here that we started a process LOG
+            frpintf(fileptr_log , "At \t time \t %d \t process %d \t started \t arr %d \t total \t %d \t remain \t %d \t wait \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , 0);
         }
     }else{
         if(kill(currentprocess.pid , SIGCONT) == -1){
@@ -213,6 +222,8 @@ void run_process(struct PCB currentprocess){
         }
         currentprocess.runningstatus = 2;
         //write here that we resumed a process LOG
+        frpintf(fileptr_log , "At \t time \t %d \t process %d \t resumed \t arr %d \t total \t %d \t remain \t %d \t wait \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , getClk()-currentprocess.lastStartTime);
+
     }
     currentprocess.lastStartTime = getClk();
 }
@@ -223,10 +234,29 @@ void pause_process(struct PCB currentprocess){
     }
     currentprocess.remainingtime = getClk() - currentprocess.lastStartTime;
     //write here that we paused a process
+    frpintf(fileptr_log , "At \t time \t %d \t process %d \t paused \t arr %d \t total \t %d \t remain \t %d \t wait \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , 0);
+
 }
 
 void handler_sigchild(int signum){
     something_running = 0;
     //write here in the perf that we finished a process
+    struct PCB currentprocess = *current_pro_ptr;
+    int TA_for_current = getClk()-currentprocess.arrivaltime;
+    int WTA_for_current = TA/currentprocess.runningtime;
+    frpintf(fileptr_log , "At \t time \t %d \t process %d \t finished \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \t TA \t %d \t WTA \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , 0 , 0 , TA_for_current , WTA_for_current);
+
+}
+
+void handler_end(int signum1){
+    fclose(fileptr_log);
+    fclose(fileptr_stats);
+    //destroyClk(true);
+    printf("the p_gen_qid at the msgctl is %d \n" , p_gen_qid);
+    if (msgctl (p_gen_qid, IPC_RMID, NULL) == -1) {
+            perror ("from the scheduler: msgctl");
+            exit (1);
+    }
+    exit(1);
 }
 //------------------------------------------------
