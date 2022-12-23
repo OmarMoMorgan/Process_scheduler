@@ -347,7 +347,7 @@ void pause_process(struct PCB *currentprocess){
 }
 
 void handler_sigchild(int signum){
-    something_running = 0;
+    
     printf("sigchild is running now will it fail \n");
     //write here in the perf that we finished a process
     struct PCB currentprocess = *current_pro_ptr;
@@ -355,10 +355,17 @@ void handler_sigchild(int signum){
     int TA_for_current = getClk() - currentprocess.arrivaltime;
     int WTA_for_current = TA_for_current/currentprocess.runningtime;
     //printf("line 3 \n");
+    current_pro_ptr->remainingtime = current_pro_ptr->remainingtime - (getClk() - current_pro_ptr->lastStartTime);
+    printf("the remain time is %d\n" , current_pro_ptr->remainingtime);
+    if(current_pro_ptr->remainingtime <= 0){
     fprintf(fileptr_log , "At \t time \t %d \t process %d \t finished \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \t TA \t %d \t WTA \t %d \n" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , 0 , 0 , TA_for_current , WTA_for_current);
-    printf("At \t time \t %d \t process %d \t finished \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \t TA \t %d \t WTA \t %d \n" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , 0 , 0 , TA_for_current , WTA_for_current);
+    printf("At \t time \t %d \t process %d \t finished \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \t TA \t %d \t WTA \t %d \n" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , 0 , TA_for_current , WTA_for_current);
 
     printf("it has finished running byee i was %d\n" , currentprocess.pid);
+    something_running = 0;
+    }else{
+        //fetchToPQ(current_pro_ptr);
+    }
 }
 
 void handler_end(int signum1){

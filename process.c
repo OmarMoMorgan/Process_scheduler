@@ -40,12 +40,18 @@ int main(int agrc, char * argv[])
     char c = *argv[1];
     int m = (int)c;
     int now = getClk();
-    remainingtime = m - (now - start);
+    //remainingtime = m - (now - start);
+    remainingtime = m;
     while(remainingtime>0)
     {
         
-        now = getClk();
-        remainingtime = m - (now - start);
+        //now = getClk();
+        int othervar = getClk();
+        if(othervar > now){
+            now = now +1;
+            remainingtime = remainingtime -1;
+        }
+        //remainingtime = m - (now - start);
         //printf("the remaining time for this process %d \n" ,remainingtime);
     }
     
