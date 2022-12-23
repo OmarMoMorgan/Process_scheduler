@@ -87,8 +87,8 @@ struct PCB{
 };
 
 struct message_to_sched{
-    struct PCB proceess_info;
     long message_type;
+    struct PCB proceess_info;
 };
 
 //starintg from here is the priority queue implementiaion

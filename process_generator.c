@@ -11,6 +11,7 @@ void startScheduler(int);
 void startClock();
 
 void SendToSched();
+int p_gen_qid;
 
 int main(int argc, char * argv[])
 {
@@ -32,7 +33,7 @@ int main(int argc, char * argv[])
     //-----sitting up ipc communications between scheduler and process generator----
     
     key_t process_gen_key;
-    int p_gen_qid;
+    
     if ((process_gen_key = ftok("firstFTOK", 65)) == -1) {
         perror ("ftok");
         exit (1);
@@ -60,18 +61,12 @@ int main(int argc, char * argv[])
     //rename them as text file 1 for , 2 for , 3 for 
     printf("enter the algorithim number that you want");
     scanf("%d",&algo);
-    int pid_scheduler;
-    pid_scheduler = fork();
-    if(pid_scheduler == -1){
-        perror("error in fork");
-        exit(1);
-    }else if(pid_scheduler == 0){
-        //startScheduler(algo);
-    }
+    
     
 
     //starrting the clock process ------------
-    //startClock();
+    startClock();
+    startScheduler(algo);
     //-------------
     
     //       destroyClk(true);
@@ -91,6 +86,7 @@ int main(int argc, char * argv[])
     // 5. Create a data structure for processes and provide it with its parameters.
     // 6. Send the information to the scheduler at the appropriate time.
     // 7. Clear clock resources
+    printf("the p_gen_qid at the pgen is %d \n" , p_gen_qid);
 
 
     struct message_to_sched Currentmsg;
@@ -107,7 +103,9 @@ int main(int argc, char * argv[])
                 sscanf(line,"%d  %d  %d  %d" , &c ,&y ,&z ,&q);
                 
                 while(y > x){
+                    printf("I am  stuck here at y > x \n");
                     sleep(y-x);
+                    x = getClk();
                 }
                 currentprocess.arrivaltime = y;
                 currentprocess.runningtime = z;
@@ -117,10 +115,11 @@ int main(int argc, char * argv[])
                 Currentmsg.proceess_info = currentprocess;
                 Currentmsg.message_type = 1;
 
-                if (msgsnd (p_gen_qid, &Currentmsg, sizeof (struct message_to_sched), 0) == -1) {
+                if (msgsnd (p_gen_qid, &Currentmsg, sizeof (struct PCB), 0) == -1) {
                     perror ("client: msgsnd error is from this line 102");
                     exit (1);
-                }       
+                }    
+                printf("i am executnig actullay here at the process generator");
                 
 
                 //printf("%d \t %d \t %d \t %d \n" , x ,y ,z ,q);
@@ -129,29 +128,48 @@ int main(int argc, char * argv[])
             } 
     //---------------------------------------
 
-
+    //sleep(5);
+    wait(NULL);
     destroyClk(true);
     // for(int i =0 ; i < 5;i++){
     //     printf("%d\n" ,x);
     // }
-    if (msgctl (p_gen_qid, IPC_RMID, NULL) == -1) {
-            perror ("client: msgctl");
-            exit (1);
-    }
+    // if (msgctl (p_gen_qid, IPC_RMID, NULL) == -1) {
+    //         perror ("error in destruction");
+    //         exit (1);
+    // }
 }
 
 void clearResources(int signum)
 {
     //TODO Clears all resources in case of interruption
-    //destroyClk(true);
-    
+    destroyClk(true);
+    printf("the p_gen_qid at the msgctl is %d \n" , p_gen_qid);
+    if (msgctl (p_gen_qid, IPC_RMID, NULL) == -1) {
+            perror ("from the pgen: msgctl");
+            exit (1);
+    }
+    exit(1);
 }
 
 void startScheduler(int algonum){
-    char* filepath = "scheduler.out";
-    char algochar = (char) algonum;
-    char* p_algo_char = &algochar;
-    execlp(filepath , p_algo_char , NULL);
+    int pid_scheduler;
+    pid_scheduler = fork();
+    if(pid_scheduler == -1){
+        perror("error in fork");
+        exit(1);
+    }else if(pid_scheduler == 0){
+        //startScheduler(algo);
+        printf(":ihave reached this part in the scheduler \n");
+        char* filepath = "./scheduler.out";
+        char algochar = (char) algonum;
+        char* p_algo_char = &algochar;
+        if(execlp(filepath , filepath,p_algo_char , NULL) == -1){
+            perror("error in exec of sched");
+            exit(1);
+        }
+    }
+    
 }
 
 void startClock(){
