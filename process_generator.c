@@ -109,8 +109,10 @@ int main(int argc, char * argv[])
                 }
                 currentprocess.arrivaltime = y;
                 currentprocess.runningtime = z;
+                currentprocess.remainingtime = z;
                 currentprocess.priority = q;
                 currentprocess.specialid = c;
+                currentprocess.FirstTime = true;
                 
                 Currentmsg.proceess_info = currentprocess;
                 Currentmsg.message_type = 1;

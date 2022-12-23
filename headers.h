@@ -84,6 +84,7 @@ struct PCB{
     int runningstatus;
     int specialid;
     bool FirstTime;
+    int FirstRunTime;
 };
 
 struct message_to_sched{
