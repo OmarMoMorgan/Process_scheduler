@@ -86,7 +86,7 @@ int main(int argc, char * argv[])
     // 5. Create a data structure for processes and provide it with its parameters.
     // 6. Send the information to the scheduler at the appropriate time.
     // 7. Clear clock resources
-    printf("the p_gen_qid at the pgen is %d \n" , p_gen_qid);
+    //printf("the p_gen_qid at the pgen is %d \n" , p_gen_qid);
 
 
     struct message_to_sched Currentmsg;
@@ -103,7 +103,7 @@ int main(int argc, char * argv[])
                 sscanf(line,"%d  %d  %d  %d" , &c ,&y ,&z ,&q);
                 
                 while(y > x){
-                    printf("I am  stuck here at y > x \n");
+                    //printf("I am  stuck here at y > x \n");
                     sleep(y-x);
                     x = getClk();
                 }
@@ -121,7 +121,7 @@ int main(int argc, char * argv[])
                     perror ("client: msgsnd error is from this line 102");
                     exit (1);
                 }    
-                printf("i am executnig actullay here at the process generator");
+                //printf("i am executnig actullay here at the process generator");
                 
 
                 //printf("%d \t %d \t %d \t %d \n" , x ,y ,z ,q);
@@ -162,7 +162,7 @@ void startScheduler(int algonum){
         exit(1);
     }else if(pid_scheduler == 0){
         //startScheduler(algo);
-        printf(":ihave reached this part in the scheduler \n");
+        //printf(":ihave reached this part in the scheduler \n");
         char* filepath = "./scheduler.out";
         char algochar = (char) algonum;
         char* p_algo_char = &algochar;
@@ -182,7 +182,7 @@ void startClock(){
         exit(1);
     }else if(pid_clock == 0){
         char* filepath = "./clk.out";
-        printf("i hace reached this part");
+        //printf("i hace reached this part");
         if(execlp(filepath , filepath,NULL) == -1){
             perror("error in exec");
             exit(1);

@@ -44,7 +44,7 @@ int main(int argc, char * argv[])
 
     fileptr_log = fopen("scheduler.log" , "w");
     fileptr_stats = fopen("scheduler.perf" , "w");
-    fprintf(fileptr_log , "#At \t time \t x \t process \t y \t state \t arr \t w \t total \t z \t remain \t y \t wait \t k");
+    fprintf(fileptr_log , "#At \t time \t x \t process \t y \t state \t arr \t w \t total \t z \t remain \t y \t wait \t k \n");
     //setting up stuff here
     //setting up connection 
     key_t process_gen_key , scheduler_process_key;
@@ -55,13 +55,13 @@ int main(int argc, char * argv[])
         exit (1);
     }
 
-    printf("the ftok at scheduler %d \n" , process_gen_key);
+    //printf("the ftok at scheduler %d \n" , process_gen_key);
 
     if ((p_gen_qid = msgget (process_gen_key, 0)) == -1) {
         perror ("msgget: server_qid");
         exit (1);
     }
-    printf("the p_gen_qid at the scheduler is %d \n" , p_gen_qid);
+    //printf("the p_gen_qid at the scheduler is %d \n" , p_gen_qid);
 
     // //process scheduler ipc
     // if ((scheduler_process_key = ftok (SERVER_KEY_PATHNAME, 'Q')) == -1) {
@@ -81,26 +81,28 @@ int main(int argc, char * argv[])
     currentalgo = *argv[1];
     printf("here is the algorithm numeber you %d \n" , currentalgo);
 
-    struct PCB temp_pcb;
-    struct message_to_sched incoming_msg;
-    while(true){
-        printf("i am executing at the loop in sched \n");
-        sleep(1);
-        if (msgrcv (p_gen_qid, &incoming_msg, sizeof (struct PCB), 0, 0) == -1) {
-            perror ("msgrcv");
-            //exit (1);
-        }else{
-            //decide here the decison based on the algortihm choose
-            //int x = *argv[0];
-            printf("i haev reache here are you happy now \n");
-            printf("%d",incoming_msg.proceess_info.runningtime);
-            //push(PQ_PCBs , 1 , incoming_msg.proceess_info);
-            //temp_pcb = pop(PQ_PCBs);
-            //printf("after pushing and poping %d \n" , temp_pcb.runningtime);
-            fetchToPQ(incoming_msg.proceess_info);
-        }
 
-    }
+//this part was only made fro debuging it should be delted later ---------------
+    // struct PCB temp_pcb;
+    // struct message_to_sched incoming_msg;
+    // while(true){
+    //     printf("i am executing at the loop in sched \n");
+    //     sleep(1);
+    //     if (msgrcv (p_gen_qid, &incoming_msg, sizeof (struct PCB), 0, 0) == -1) {
+    //         perror ("msgrcv");
+    //         //exit (1);
+    //     }else{
+    //         //decide here the decison based on the algortihm choose
+    //         //int x = *argv[0];
+    //         printf("i haev reache here are you happy now \n");
+    //         printf("%d",incoming_msg.proceess_info.runningtime);
+    //         //push(PQ_PCBs , 1 , incoming_msg.proceess_info);
+    //         //temp_pcb = pop(PQ_PCBs);
+    //         //printf("after pushing and poping %d \n" , temp_pcb.runningtime);
+    //         fetchToPQ(incoming_msg.proceess_info);
+    //     }
+    //
+    //}
     //for shortest job first and other stuff also
     //we weill use a sigchild signal to know that a process terminated then 
     //depending on the beahvour of the selected algortihm we will decide what to do next
@@ -112,6 +114,9 @@ int main(int argc, char * argv[])
     //to recive stuff only for each process 
 
     //in the middle also we should make a loop depending on the next incoming 
+    //-----------------------------------------------
+
+    RunAlgo(currentalgo);
 
     destroyClk(true);
 }
@@ -165,12 +170,12 @@ void RunSRTN(){
     struct PCB currentPCB;
     struct PCB comparingPCB;
     while(true){
-        sleep(1);
+        
         if(something_running == 0)
         {
             currentPCB = pop(PQ_PCBs);
             if(currentPCB.specialid == 0){
-                printf("there is no process at the current time ");
+                printf("there is no process at the current time first algo\n");
             }
             else
             {
@@ -192,7 +197,7 @@ void RunSRTN(){
         }
 
         }
-        
+        sleep(1);
     }
 }
 
@@ -202,12 +207,12 @@ void RunPHPF(){
     struct PCB currentPCB;
     struct PCB comparingPCB;
     while(true){
-        sleep(1);
+        
         if(something_running == 0)
         {
             currentPCB = pop(PQ_PCBs);
             if(currentPCB.specialid == 0){
-                printf("there is no process at the current time ");
+                printf("there is no process at the current time \n");
             }
             else
             {
@@ -229,6 +234,7 @@ void RunPHPF(){
         }
 
             }   
+            sleep(1);
         }
     }
 
@@ -237,18 +243,19 @@ void RunSJF(){
     struct PCB currentPCB;
     current_pro_ptr = &currentPCB;
     while(true){
-        sleep(1);
+        
         int recivedsometing = recieveProcess();
         if(something_running == 0){
             //here you should add that something happened in the output file
             currentPCB = pop(PQ_PCBs);
             if(currentPCB.specialid == 0){
-                printf("there is no process at the current time ");
+                printf("no process at the current time \n");
             }else{
                 run_process(currentPCB);
                 something_running = 1;
             }
         }
+        sleep(1);
     }
 }
 
@@ -278,7 +285,7 @@ void run_process(struct PCB currentprocess){
             currentprocess.runningstatus = 2;
             
             //wrtie here that we started a process LOG
-            fprintf(fileptr_log , "At \t time \t %d \t process %d \t started \t arr %d \t total \t %d \t remain \t %d \t wait \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , 0);
+            fprintf(fileptr_log , "At \t time \t %d \t process %d \t started \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \n" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , 0);
         }
     }else{
         if(kill(currentprocess.pid , SIGCONT) == -1){
@@ -286,7 +293,7 @@ void run_process(struct PCB currentprocess){
         }
         currentprocess.runningstatus = 2;
         //write here that we resumed a process LOG
-        fprintf(fileptr_log , "At \t time \t %d \t process %d \t resumed \t arr %d \t total \t %d \t remain \t %d \t wait \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , getClk()-currentprocess.lastStartTime);
+        fprintf(fileptr_log , "At \t time \t %d \t process %d \t resumed \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \n" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , getClk()-currentprocess.lastStartTime);
 
     }
     currentprocess.lastStartTime = getClk();
@@ -298,7 +305,7 @@ void pause_process(struct PCB currentprocess){
     }
     currentprocess.remainingtime = getClk() - currentprocess.lastStartTime;
     //write here that we paused a process
-    fprintf(fileptr_log , "At \t time \t %d \t process %d \t paused \t arr %d \t total \t %d \t remain \t %d \t wait \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , 0);
+    fprintf(fileptr_log , "At \t time \t %d \t process %d \t paused \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \n" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , 0);
 
 }
 
@@ -308,7 +315,7 @@ void handler_sigchild(int signum){
     struct PCB currentprocess = *current_pro_ptr;
     int TA_for_current = getClk()-currentprocess.arrivaltime;
     int WTA_for_current = TA_for_current/currentprocess.runningtime;
-    fprintf(fileptr_log , "At \t time \t %d \t process %d \t finished \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \t TA \t %d \t WTA \t %d" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , 0 , 0 , TA_for_current , WTA_for_current);
+    fprintf(fileptr_log , "At \t time \t %d \t process %d \t finished \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \t TA \t %d \t WTA \t %d \n" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , 0 , 0 , TA_for_current , WTA_for_current);
 
 }
 
@@ -316,7 +323,7 @@ void handler_end(int signum1){
     fclose(fileptr_log);
     fclose(fileptr_stats);
     //destroyClk(true);
-    printf("the p_gen_qid at the msgctl is %d \n" , p_gen_qid);
+    //printf("the p_gen_qid at the msgctl is %d \n" , p_gen_qid);
     if (msgctl (p_gen_qid, IPC_RMID, NULL) == -1) {
             perror ("from the scheduler: msgctl");
             exit (1);

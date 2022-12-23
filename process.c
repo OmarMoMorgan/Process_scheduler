@@ -36,6 +36,7 @@ int main(int agrc, char * argv[])
     //     // remainingtime = ??;
     // }
     int start = getClk();
+    printf("From the process File %d " , getpid());
     while(remainingtime>0)
     {
         char c = *argv[1];
