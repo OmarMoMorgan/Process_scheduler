@@ -31,6 +31,7 @@ FILE *fileptr_log;
 struct PCB *current_pro_ptr;
 
 void handler_end(int);
+void handlersiguser(int);
 
 int main(int argc, char * argv[])
 {
@@ -38,6 +39,7 @@ int main(int argc, char * argv[])
     printf("from scheduler \n");
     signal(SIGCHLD  , handler_sigchild);
     signal(SIGINT , handler_end);
+    signal(SIGUSR1 , handlersiguser);
     PQ_PCBs = (heap_t *)calloc(1, sizeof (heap_t));
     //TODO implement the scheduler :)
     //upon termination release the clock resources
@@ -348,8 +350,47 @@ void pause_process(struct PCB *currentprocess){
 
 void handler_sigchild(int signum){
     
-    printf("sigchild is running now will it fail \n");
-    //write here in the perf that we finished a process
+    // printf("sigchild is running now will it fail \n");
+    // //write here in the perf that we finished a process
+    // struct PCB currentprocess = *current_pro_ptr;
+    // //printf("line 2 \n");
+    // int TA_for_current = getClk() - currentprocess.arrivaltime;
+    // int WTA_for_current = TA_for_current/currentprocess.runningtime;
+    // //printf("line 3 \n");
+    // current_pro_ptr->remainingtime = current_pro_ptr->remainingtime - (getClk() - current_pro_ptr->lastStartTime);
+    // printf("the remain time is %d\n" , current_pro_ptr->remainingtime);
+    // if(current_pro_ptr->remainingtime <= 0){
+    // fprintf(fileptr_log , "At \t time \t %d \t process %d \t finished \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \t TA \t %d \t WTA \t %d \n" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , 0 , 0 , TA_for_current , WTA_for_current);
+    // printf("At \t time \t %d \t process %d \t finished \t arr %d \t total \t %d \t remain \t %d \t wait \t %d \t TA \t %d \t WTA \t %d \n" , getClk() , currentprocess.specialid , currentprocess.arrivaltime , currentprocess.runningtime , currentprocess.remainingtime , 0 , TA_for_current , WTA_for_current);
+
+    // printf("it has finished running byee i was %d\n" , currentprocess.pid);
+    // something_running = 0;
+    // Total_WTA +=  WTA_for_current;
+    // totalTA += (currentprocess.FirstRunTime - currentprocess.arrivaltime );
+    // totalRunningtime += currentprocess.runningtime;
+    // each_WA_time[out_c] = WTA_for_current;
+    // out_c += 1 ;
+    // }else{
+    //     //fetchToPQ(current_pro_ptr);
+    // }
+}
+
+void handler_end(int signum1){
+    fclose(fileptr_log);
+    fclose(fileptr_stats);
+    //destroyClk(true);
+    //printf("the p_gen_qid at the msgctl is %d \n" , p_gen_qid);
+    // if (msgctl (p_gen_qid, IPC_RMID, NULL) == -1) {
+    //         perror ("from the scheduler: msgctl");
+    //         exit (1);
+    // }
+    measure_state(fileptr_stats);
+    printf("Feeling that the end of our time is near \n");
+    exit(1);
+}
+//------------------------------------------------
+
+void handlersiguser(int signum3){
     struct PCB currentprocess = *current_pro_ptr;
     //printf("line 2 \n");
     int TA_for_current = getClk() - currentprocess.arrivaltime;
@@ -372,18 +413,3 @@ void handler_sigchild(int signum){
         //fetchToPQ(current_pro_ptr);
     }
 }
-
-void handler_end(int signum1){
-    fclose(fileptr_log);
-    fclose(fileptr_stats);
-    //destroyClk(true);
-    //printf("the p_gen_qid at the msgctl is %d \n" , p_gen_qid);
-    // if (msgctl (p_gen_qid, IPC_RMID, NULL) == -1) {
-    //         perror ("from the scheduler: msgctl");
-    //         exit (1);
-    // }
-    measure_state(fileptr_stats);
-    printf("Feeling that the end of our time is near \n");
-    exit(1);
-}
-//------------------------------------------------

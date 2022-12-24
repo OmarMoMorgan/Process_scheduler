@@ -187,11 +187,11 @@ float calc_std(int m, int n)
 }
 float calc_avg_WTA()
 {
-    return  (Total_WTA/out_c);
+    return  ((float)Total_WTA/out_c);
 }
 float calc_avg_waiting()
 {
-    return (totalTA/out_c);
+    return ((float)totalTA/out_c);
 }
 float calc_CPU()
 {

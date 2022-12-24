@@ -50,13 +50,19 @@ int main(int agrc, char * argv[])
         if(othervar > now){
             now = now +1;
             remainingtime = remainingtime -1;
+            printf("another second has passed %d\n" , getpid());
         }
         //remainingtime = m - (now - start);
         //printf("the remaining time for this process %d \n" ,remainingtime);
     }
-    exit(2);
+    if(kill(getppid() , SIGUSR1)){
+        perror("failed at killing\n");
+    }
+    printf("after this line of killing \n");
     
     destroyClk(false);
+    exit(2);
+    
     
     return 0;
 }
