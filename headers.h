@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+#include <math.h>
+//#include <libm.a>
 //#include "PQ.c"
 
 typedef short bool;
@@ -160,3 +162,52 @@ struct PCB pop (heap_t *h) {
 }
 //-----------------------
 //it ends here
+
+//stuff for the output perf -------------
+int Total_WTA;
+int out_c =0;
+int each_WA_time[100];
+int totalTA = 0;
+int totalRunningtime = 0;
+
+
+float calc_sum(int m, int n)
+{
+    float sum = 0;
+    for (int i = 0 ; i < n; i++)
+    {
+        sum += pow((each_WA_time[i]-m),2);
+    }
+    return sum;
+}
+float calc_std(int m, int n)
+{
+    float std = pow(calc_sum(m,n)/(n-1),0.5);
+    return std;
+}
+float calc_avg_WTA()
+{
+    return  (Total_WTA/out_c);
+}
+float calc_avg_waiting()
+{
+    return (totalTA/out_c);
+}
+float calc_CPU()
+{
+    float cpu = (totalRunningtime / (float)getClk())*100 ;
+    printf("total running time %d \n" , totalRunningtime);
+    printf("clock at this instant is %d \n" , getClk());
+    return cpu;
+}
+FILE *fileptr_stats;
+void measure_state(FILE* fileName)
+{
+    float std =             calc_std(Total_WTA, out_c);
+    float avg_WTA =         calc_avg_WTA();
+    float avg_waiting  =    calc_avg_waiting();
+    float cpu =             calc_CPU();
+    printf("the numbers are in orderd %f %f %f %f \n" , std , avg_WTA , avg_waiting , cpu);
+    fprintf(fileName , "CPU utilization =  %f \n Avg WTA =  %f \n Avg Waiting =  %f \n Std WTA = %f \n" , cpu, avg_WTA, avg_waiting, std);
+}
+//-----------------------------------------

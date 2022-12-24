@@ -36,7 +36,7 @@ int main(int agrc, char * argv[])
     //     // remainingtime = ??;
     // }
     int start = getClk();
-    printf("From the process File %d \n" , getpid());
+    printf("From the process File %d at %d\n" , getpid() , getClk());
     char c = *argv[1];
     int m = (int)c;
     int now = getClk();
@@ -54,6 +54,7 @@ int main(int agrc, char * argv[])
         //remainingtime = m - (now - start);
         //printf("the remaining time for this process %d \n" ,remainingtime);
     }
+    exit(2);
     
     destroyClk(false);
     

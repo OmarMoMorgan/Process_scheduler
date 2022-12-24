@@ -23,11 +23,11 @@ int p_gen_qid;
 int something_running = 0;
 
 //variables needed for output file
-int totalTA = 0;
-int totalRunningtime = 0;
+//int totalTA = 0;
+//int totalRunningtime = 0;
 int num_process = 0;
 FILE *fileptr_log;
-FILE *fileptr_stats;
+
 struct PCB *current_pro_ptr;
 
 void handler_end(int);
@@ -363,6 +363,11 @@ void handler_sigchild(int signum){
 
     printf("it has finished running byee i was %d\n" , currentprocess.pid);
     something_running = 0;
+    Total_WTA +=  WTA_for_current;
+    totalTA += (currentprocess.FirstRunTime - currentprocess.arrivaltime );
+    totalRunningtime += currentprocess.runningtime;
+    each_WA_time[out_c] = WTA_for_current;
+    out_c += 1 ;
     }else{
         //fetchToPQ(current_pro_ptr);
     }
@@ -377,6 +382,7 @@ void handler_end(int signum1){
     //         perror ("from the scheduler: msgctl");
     //         exit (1);
     // }
+    measure_state(fileptr_stats);
     printf("Feeling that the end of our time is near \n");
     exit(1);
 }
