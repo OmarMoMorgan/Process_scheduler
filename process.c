@@ -58,7 +58,7 @@ int main(int agrc, char * argv[])
     if(kill(getppid() , SIGUSR1)){
         perror("failed at killing\n");
     }
-    printf("after this line of killing \n");
+    printf("after this line of killing %d \n" , getpid());
     
     destroyClk(false);
     exit(2);
